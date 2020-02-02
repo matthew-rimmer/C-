@@ -9,8 +9,14 @@ namespace CompilerProgram
     public class interpreter
     {
         private List<string> lines = new List<string>(); //List for containing all lines
-        private Dictionary<string, float> variable = new Dictionary<string, float>(); // Dictionary for variables
+        
+        private Dictionary<string, float> variables = new Dictionary<string, float>(); // Dictionary for variables
 
+        private Stack<Context> contexts = new Stack<Context>();
+
+        int currentLineNumber;
+
+        int bracketCount;
 
         // Executes interpretater
         public interpreter(string LinesIn)
@@ -31,6 +37,12 @@ namespace CompilerProgram
                     //Console.WriteLine(currentLine);
                     currentLine = "";
                 }
+                else if (newLinesIn[i].Equals('}') || newLinesIn[i].Equals('{'))
+                {
+                    lines.Add(currentLine + newLinesIn[i]);
+                    //Console.WriteLine(currentLine);
+                    currentLine = "";
+                }
                 else // if not eol
                 {
                     currentLine = currentLine + newLinesIn[i];
@@ -38,27 +50,37 @@ namespace CompilerProgram
             }
 
             // Run each line of code
-            for (int i = 0; i < lines.Count; i++)
+            for (currentLineNumber = 0; currentLineNumber < lines.Count; currentLineNumber++)
             {
-                RunLine(lines[i], i);
+                RunLine(lines[currentLineNumber], currentLineNumber);
             }
         }
 
         void ProcessAssignment(string[] parts)
         {
+            if (variables.ContainsKey(parts[0]))
+            {
+                int rightSide = processRightSide(parts);
+                variables[parts[0]] = rightSide;
 
+            }
+            else
+            {
+                int rightSide = processRightSide(parts);
+                variables.Add(parts[0], rightSide);
+            }
         }
 
-        void ProcessLoop(int loopLength, int loop) 
+        int processRightSide(string[] parts)
         {
-            
+            return 0;
         }
 
         // Runs a line of code
         void RunLine(string line, int lineNum)
         {
 
-            //Console.WriteLine(line);
+            Console.WriteLine(line);
 
             // Regex that splits the string based on variables/symbols/values + removes whitespace
             string[] parts = Regex.Split(line, @"(\d+(?:.\d+)?|[-^=+/()]|\w+)").Where(s => s != String.Empty).ToArray<string>(); ;
@@ -67,18 +89,57 @@ namespace CompilerProgram
             //Console.WriteLine(parts[1]);
             //Console.WriteLine(parts[2]);
 
-            if (parts[1] == "=")
+            if (parts.Length == 0)
             {
+
+            }
+            else if (parts[0] == "}")
+            {
+                Console.WriteLine("Hey I've reached the end of something");
+
+                if (contexts.Peek() is LoopContext)
+                {
+                    LoopContext lcontext = (LoopContext)contexts.Pop();
+
+                    Console.WriteLine("Hey, it's a loop!");
+
+                    if (lcontext.checkContext())
+                    {
+                        Console.WriteLine("Let's do it again!");
+                        currentLineNumber = lcontext.firstLine;
+                        Console.WriteLine(lcontext.current);
+                        contexts.Push(lcontext);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Oh hey, this loop is done");
+                    }
+                }
+                else if (contexts.Peek() is IfContext)
+                {
+                    Console.WriteLine("Hey, it's an if!");
+                    contexts.Pop();
+                }
+            }
+            else if (parts[1] == "=")
+            {
+                Console.WriteLine("Hey I'm in an assignment");
                 ProcessAssignment(parts);
             }
             else if (parts[0] == "loop")
             {
-                LoopContext loopContext = new LoopContext(int.Parse(parts[1]), lineNum);
+                Console.WriteLine("Hey I've found a loop");
+                LoopContext loopContext = new LoopContext(int.Parse(parts[2]), lineNum);
+                contexts.Push(loopContext);
+
             }
             else if (parts[0] == "if")
             {
-
+                Console.WriteLine("Hey I've found an if");
+                IfContext forContext = new IfContext(parts[2], lineNum);
+                contexts.Push(forContext);
             }
+
 
 
             /*List<string> parts = new List<string>();
@@ -111,15 +172,16 @@ namespace CompilerProgram
 
     public class Context
     {
-        int current;
-        int firstLine;
+        public int current;
+        public int firstLine;
+        public int bracketCount;
 
 
         public Context()
         {
 
         }
-        public bool endOfContext()
+        public bool checkContext()
         {
             return true;
         }
@@ -132,8 +194,8 @@ namespace CompilerProgram
 
     public class IfContext : Context
     {
-        int condition;
-        public IfContext(int condition, int firstline)
+        string condition;
+        public IfContext(string condition, int firstline)
         {
 
         }
@@ -144,7 +206,26 @@ namespace CompilerProgram
         int loopLength;
         public LoopContext(int loopLength, int firstline)
         {
+            this.loopLength = loopLength;
+            this.firstLine = firstline;
+        }
 
+        new public bool checkContext()
+        {
+            if (current == loopLength -1)
+            {
+                return false;
+            }
+            else
+            {
+                current += 1;
+                return true;
+            }
+        }
+
+        public void addBracket()
+        {
+            bracketCount += 1;
         }
     }
 
