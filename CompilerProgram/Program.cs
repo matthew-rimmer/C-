@@ -7,7 +7,13 @@ namespace CompilerProgram
         static void Main(string[] args)
         {
             string testString = @"x = 5;
-            y = 1;";
+            y = 1;
+
+            variable = x;
+            loop(25)
+            {
+                x = x+1;
+            }";
 
             interpreter interp = new interpreter(testString);
 

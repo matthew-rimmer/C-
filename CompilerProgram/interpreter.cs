@@ -11,47 +11,76 @@ namespace CompilerProgram
         private List<string> lines = new List<string>(); //List for containing all lines
         private Dictionary<string, float> variable = new Dictionary<string, float>(); // Dictionary for variables
 
+
+        // Executes interpretater
         public interpreter(string LinesIn)
         {
-            string newLinesIn = Regex.Replace(LinesIn, @"\s+", "");
+            string newLinesIn = Regex.Replace(LinesIn, @"\s+", ""); //Removes White space
 
-            string currentLine = "";
+            string currentLine = ""; //Instansiate empty line
 
             //Console.WriteLine(newLinesIn);
 
+
+            //Add to line until reach ;
             for (int i = 0; i < newLinesIn.Length; i++)
             {
-                if (newLinesIn[i].Equals(';'))
+                if (newLinesIn[i].Equals(';')) //if reached eol
                 {
                     lines.Add(currentLine);
                     //Console.WriteLine(currentLine);
                     currentLine = "";
                 }
-                else
+                else // if not eol
                 {
                     currentLine = currentLine + newLinesIn[i];
                 }
             }
 
+            // Run each line of code
             for (int i = 0; i < lines.Count; i++)
             {
-                RunLine(lines[i]);
+                RunLine(lines[i], i);
             }
         }
 
-        void ProcessAssignment()
+        void ProcessAssignment(string[] parts)
         {
 
         }
 
-        void RunLine(string line)
+        void ProcessLoop(int loopLength, int loop) 
         {
-            //Console.WriteLine(line);
-            string[] parts = Regex.Split(line, @"(\d+(,\d+)*(?:.\d+)?(?:[eE][-+]?[0-9]+)?|[-^+/()]|\w+)").Where(s => s != String.Empty).ToArray<string>(); ;
+            
+        }
 
-            Console.WriteLine(parts[0]);
-            Console.WriteLine(parts[1]);
-            Console.WriteLine(parts[2]);
+        // Runs a line of code
+        void RunLine(string line, int lineNum)
+        {
+
+            //Console.WriteLine(line);
+
+            // Regex that splits the string based on variables/symbols/values + removes whitespace
+            string[] parts = Regex.Split(line, @"(\d+(?:.\d+)?|[-^=+/()]|\w+)").Where(s => s != String.Empty).ToArray<string>(); ;
+
+            //Console.WriteLine(parts[0]);
+            //Console.WriteLine(parts[1]);
+            //Console.WriteLine(parts[2]);
+
+            if (parts[1] == "=")
+            {
+                ProcessAssignment(parts);
+            }
+            else if (parts[0] == "loop")
+            {
+                LoopContext loopContext = new LoopContext(int.Parse(parts[1]), lineNum);
+            }
+            else if (parts[0] == "if")
+            {
+
+            }
+
+
             /*List<string> parts = new List<string>();
             
             
@@ -79,4 +108,44 @@ namespace CompilerProgram
 
         }
     }
+
+    public class Context
+    {
+        int current;
+        int firstLine;
+
+
+        public Context()
+        {
+
+        }
+        public bool endOfContext()
+        {
+            return true;
+        }
+        // Instance of loopContext for each loop we are in
+        // List for each, first or last value is current and each in order is next above
+        // Have function that checks if current != condition
+        // if is return firstLine and increment current
+        // else end loop and remove from list
+    }
+
+    public class IfContext : Context
+    {
+        int condition;
+        public IfContext(int condition, int firstline)
+        {
+
+        }
+    }
+
+    public class LoopContext : Context
+    {
+        int loopLength;
+        public LoopContext(int loopLength, int firstline)
+        {
+
+        }
+    }
+
 }
