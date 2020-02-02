@@ -8,7 +8,6 @@ namespace CompilerProgram
         {
             string testString = @"x = 5;
             y = 1;
-            variable = x;
             loop(3)
             {
                 x = x+1;
